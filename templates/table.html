@@ -1,0 +1,143 @@
+<html>
+<head>
+   <meta charset="utf-8">
+   <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+   
+   <meta name="viewport" content = "width=device-width, initial-scale=1.0">
+   
+   <title>Feedr</title>
+
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+   <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+   
+   <script src="{{ url_for('static', filename='mindmup-editabletable.js') }}"></script>
+
+<script type="text/javascript" >
+
+$(document).ready(function() {
+   $('.editable').editableTableWidget();
+
+	//selected row
+   var srow = 0
+   
+   //numrows
+   var numrows = 0
+
+   $('tr').each(function( index ) {
+      numrows = numrows + 1       
+   })
+	
+	$('button#new').bind('click', function() {
+      console.log('New row')
+      $('#mytable').append('<tr id="row0"><td id="cat' + numrows + '">Num Cat</td><td class="hidden" id="sou' + numrows + '">0</td><td id="tit' + numrows + '">Title</td><td id="url' + numrows + '">Url</td></tr>')
+      $('.editable').editableTableWidget();
+      numrows = numrows + 1
+     	
+   })	
+	
+	$('button#delete').bind('click', function() {
+		console.log(srow)
+		if (srow > 0){
+			$.ajax({
+      	   type: "POST",
+         	contentType: "application/json; charset=utf-8",
+         	dataType: "json",
+         	data: '{"row":' + srow + '}',
+         	url: "/delrowsources",
+         	success: function(msg){
+            	console.log("Row deleted")
+         	}
+      	})			
+		
+		}
+			
+	
+	})	
+	
+	
+	$('button#apply').bind('click', function() {
+	   
+	   postdata = '{'
+	   
+      $('td').each(function( index ) {
+         postdata = postdata + '"' + $(this).attr('id') + '":"' + $(this).text() + '",'       
+      })           
+      
+      postdata = postdata.slice(0,-1) + '}'
+      
+      console.log(postdata)
+      
+      $.ajax({
+         type: "POST",
+         contentType: "application/json; charset=utf-8",
+         dataType: "json",
+         data: postdata,
+         url: "/updatesources",
+         success: function(msg){
+            console.log("Table sources updated successfully")
+         }
+      })
+
+      
+   })
+   
+   $('table').on('click','tr',function(e){
+  		//$('table').find('tr.highlight').removeClass('highlight');
+  		//$(this).addClass('highlight');
+  		srow = $(this).attr('id')
+  		console.log(srow)
+  		srow = srow.substring(3,4)
+	})
+   
+   
+   $(document).keyup(function(e) {
+     if (e.keyCode == 27) { // escape key maps to keycode `27`
+        console.log('ESCCCCCCCCCCCCCCC')
+        $('div[name="' + visibleid + '"]').toggleClass('hidden')
+    }
+});
+   
+})   
+   
+</script>
+
+</head>
+
+
+<div class="container">
+   <table class="editable table table-hover" id="mytable">
+      <thead>
+         <tr>
+         	<!-- first column used to select row so is not editable -->
+         	<th>Cat</th>
+            <th>Title</th>
+            <th>Url</th>
+         </tr>
+      </thead>
+    
+    <tbody>
+   
+    {% set j = 1 %}  
+    {% for i in s %}
+      <tr id="row{{i.sourceid}}">
+      	<td id="cat{{j}}">{{i.cat}}</td>
+         <td class="hidden" id="sou{{j}}">{{i.sourceid}}</td>
+         <td id="tit{{j}}">{{i.title}}</td>
+         <td id="url{{j}}">{{i.url}}</td>
+      </tr>    
+    {% set j = j + 1 %}
+    {% endfor %}    
+        
+    </tbody>
+  </table>
+
+
+<button type="button" class="btn btn-primary" id="apply">Apply</button>
+<button type="button" class="btn btn-secondary" id="cancel">Cancel</button>  
+
+<button type="button" class="btn btn-danger pull-right" id="delete">Delete row</button>
+<button type="button" class="btn btn-warning pull-right" id="new">New row</button>
+
+  
+</div>

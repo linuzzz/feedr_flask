@@ -1,0 +1,21 @@
+1. fav with ajax check result...not fav if db isnt available
+2. implement single mark as read in the icon on the right
+3. refresh portion of a page 
+4. opzione x vedere articoli letti
+5. finestra x aggiungere feed o rimuovere o edit
+6. sanitize
+7. parametri dell'applicazione in un cfg?
+8. column size
+
+
+occhio che ho modificato la tabella sources:
+REATE TABLE sources (
+    "cat" INTEGER NOT NULL,
+    "sourceid" INTEGER PRIMARY KEY NOT NULL,
+    "title" TEXT NOT NULL,
+    "etag" TEXT NOT NULL DEFAULT (''),
+    "url" TEXT NOT NULL,
+    "modified" TEXT NOT NULL DEFAULT ('')
+)
+
+quindi sourceid è un PK

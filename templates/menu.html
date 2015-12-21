@@ -1,0 +1,329 @@
+<html>
+<head>
+   <meta charset="utf-8">
+   <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='feedr.css') }}">
+   
+   <meta name="viewport" content = "width=device-width, initial-scale=1.0">
+   
+   <title>Feedr</title>
+
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+   <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+   
+   
+
+<script type="text/javascript" >
+
+var artid
+
+$(document).ready(function() {
+   
+   //javascript function to show bootstrap modal window
+   //triggered when modal is about to be shown
+   $('#myModal').on('show.bs.modal', function (event) { // id of the modal with event
+      var div = $(event.relatedTarget) // div that triggered the modal
+      var article = div.data('text') // Extract info from data-* attributes
+	   var source = div.data('source')
+	   var id = div.data('id')
+	   artid = id
+	   //console.log($('div#'+id))
+	   //console.log($('div#'+id).text())
+	   
+	   // Update the modal's content.
+	   var modal = $(this)
+	   modal.find('.modal-title').text(source)
+	   //modal.find('.modal-body').text($('div#'+id).text())
+	   
+	   //$("#article_html").html($('div#'+id).text());
+      $("#article_html").html($('div#'+id).html());
+	   
+	   
+	})
+	
+   //when closing the modal...mark as read	
+   $('#myModal').on('hide.bs.modal', function (event) { // id of the modal with event
+      //console.log(artid)
+
+      //formato json per il parametro in ajax            
+      var data = { id: artid };
+      
+      console.log(data)  
+                
+      //ajax function
+      $.getJSON('../mark', data);
+      
+      //console.log($('span#read'))
+      //console.log(artid)
+      //console.log($('span#read[title="' + artid + '"]'))
+      $('span#read[title="' + artid + '"]').toggleClass("fa-file-o fa-file");
+            
+      //console.log($(span#read[title=artid]))
+	   
+	})	
+		
+	
+	//javascript function to toggle favorite state of the article on the db via ajax call
+	$("span#fav").bind('click', function() {
+      //alert($(this).attr("title"));
+      
+      //data sent via ajax      
+      var data = { id: $(this).attr("title") };
+      
+      //ajax function
+      $.getJSON('../fav', data);
+      
+      //invert favorite icon
+      $(this).toggleClass("fa-hand-o-up fa-hand-o-down");
+   })
+   
+   //javascript function to mark as read all visible articles
+	$("a#mark").bind('click', function() {
+      //alert($(this).attr("title"));
+      
+      //gli id degli articoli visualizzati sono nei div hidden...che hanno un id numerico che è appunto l'id dell'articolo nel db
+      //il check su isNumeric serve perché ci sono altri div hidden nel template html
+      jsonObj = '{';
+      
+      i = 0
+      $('div:hidden').each(function() {
+         var artid = $(this).attr("id");
+         if ($.isNumeric(artid)) {
+            jsonObj = jsonObj + '"' + i + '":"' + artid + '",'              
+            i = i + 1
+            }
+      });      
+      
+      //qui finisco di costruire la stringa in jsonformat
+      jsonObj = jsonObj.slice(0,-1) + '}'
+      
+      //console.log(jsonObj)      
+      
+      $.getJSON('../markall', jQuery.parseJSON(jsonObj));
+      
+      location.reload()
+   })
+   
+   
+   //javascript function to refresh articles
+	$("a#refresh").bind('click', function() {
+            
+      console.log("refreshing...")
+      $("#refreshModal").modal()
+      //use of get instead of getJSON: i don't need any json back...
+      
+      var jqxhr = $.get( "../refresh")
+      
+      jqxhr.done(function() {
+         console.log( "Refreshing done" );
+         $("#refreshModal").modal("hide");
+      })
+      
+      jqxhr.fail(function() {
+         console.log("Refreshing error" );
+      })
+      
+      //location.reload()
+   })   
+   
+   $(document).keyup(function(e) {
+      console.log(e.keyCode)
+      
+      //if (e.keyCode == 27) { // escape key maps to keycode `27`
+         //console.log('ESCCCCCCCCCCCCCCC')
+         //$('div[name="' + visibleid + '"]').toggleClass('hidden')
+      //}
+      
+      if (e.keyCode == 160) { // ^ key maps to keycode `160`
+         if ($("#logModal").is(':visible')){      
+            $("#logModal").modal('toggle');
+            }
+         else {
+            var jqxhr = $.get("../getlogs", function(data) {
+               //console.log(data);
+               $("#logModal").find('.modal-body').html(data)
+               $("#logModal").modal('toggle');
+            })
+      
+            jqxhr.done(function() {
+               console.log("Log retrieving done");
+            })
+              
+            jqxhr.fail(function() {
+               console.log("Log retrieving error" );
+            })
+         }   
+      }
+                   
+   })
+	
+})  
+   
+</script>   
+   
+</head>
+
+<body class = "body">
+
+<nav class="navbar navbar-default" role="navigation">
+   <div class="container-fluid">
+      <!-- Brand and toggle get grouped for better mobile display -->
+      <div class="navbar-header">
+         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#feedr-menu">
+            <span class="sr-only">Toggle navigation</span>
+        
+            <!-- queste span servono solo ad aumentare le dimensioni del bottone per il toggling in caso di accesso da mobile -->
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        
+        
+         </button>
+         <a class="navbar-brand" href="#">Feedr</a>
+      </div>
+
+      <!-- Collect the nav links, forms, and other content for toggling -->
+      <div class="collapse navbar-collapse montserrat" id="feedr-menu">
+         <ul class="nav navbar-nav">
+         <li><a href="#">Settings</a></li>
+         <li><a href="#">Add</a></li>
+         <li><a href="#" id="refresh">Refresh</a></li>
+         <li><a href="#" id="mark">Mark as read</a></li>
+         
+         <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Folders<span class="caret"></span></a>
+            <ul class="dropdown-menu" role="menu">
+            
+            {% for folder in f %}
+               <li><a href="{{url_for('news', cat=folder.cat)}}">{{ folder.description }}</a></li>
+               <li class="divider"></li>
+               
+            {% endfor %}
+            
+            </ul>
+        </li>
+        </ul>
+
+         <form class="navbar-form navbar-left" role="search">
+            <div class="form-group">
+               <input type="text" class="form-control" placeholder="Search">
+            </div>
+               <button type="submit" class="btn btn-default">Submit</button>
+         </form>
+      
+               
+      
+         <ul class="nav  navbar-nav navbar-right">
+            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+         </ul>
+      </div>
+   </div>
+</nav>
+
+{% if not onlyMenu %} 
+ 
+<div class="container">
+   <table class="table table-hover">
+      <thead>
+         <tr>
+            <th>Source</th>
+            <th>Title</th>
+            <th>Fav</th>
+            <th>Mark as read</th>
+         </tr>
+      </thead>
+    <tbody>
+    
+    
+      {% for i in entries %}
+         <tr><td><a href={{i.url}} target="_parent">{{i.source}}</a></td>
+         <td><div data-toggle="modal" data-target="#myModal" data-id="{{i.id}}" data-source="{{i.source}}">{{i.title}}</div><div id={{i.id}} hidden>{{i.content | safe}}</div></td>
+         <td>
+
+         {% if i.favorite == 1 %}         
+            <span class="fa fa-hand-o-up" id="fav" title="{{i.id}}"></span>
+         {% else %}
+            <span class="fa fa-hand-o-down" id="fav" title="{{i.id}}"></span>
+         {% endif %}
+         
+         </td><td><span class="fa fa-file" id="read" title="{{i.id}}"></span></td></tr>    
+         {% endfor %}    
+        
+    </tbody>
+  </table>
+</div>
+   
+  
+   {% if total > limit %}
+   {% set limit = limit + 10 %}
+      <form action="/news/{{ category }}" method="get">
+      <input type="hidden" name="limit" value="{{ limit }}"></input>
+         <button class="btn btn-default btn-lg center-block" type="submit" aria-haspopup="true" aria-expanded="false">
+            Load more
+         </button>
+      </form>
+   {% endif %}
+   
+
+{% endif %}     
+
+
+<footer class="footer">
+   <div class="container">
+      <p class="text-muted text-center">Paolo C. - Powered by Python, Flask, SQLite, JQuery, Bootstrap</p>
+   </div>
+</footer>
+
+
+<!-- Modal -->
+<!-- tabindex = -1 necessario per fare chiudere la finestra con ESC -->
+<div class="modal fade" id="myModal" role="dialog" tabindex='-1'>
+   <div class="modal-dialog">
+    
+   <!-- Modal content-->
+   <div class="modal-content">
+      <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Modal Header</h4>
+      </div>
+      <div class="modal-body" id="article_html">
+      <!--
+          <p>Text to be replaced with feed content</p>
+      -->
+      </div>
+      <div class="modal-footer">
+         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+      
+   </div>
+      
+   </div>
+</div>
+
+<!-- Modal for showing refreshing message-->
+<div class="modal fade" id="refreshModal" role="dialog">
+   <div class="modal-dialog">
+      <div class="modal-content">
+         <div class="modal-body">
+             <h2><p>Refreshing articles...</p></h1>
+         </div>
+      </div>
+   </div>
+</div>
+  
+
+<!-- Modal for showing logs-->
+<div class="modal fade" id="logModal" role="dialog">
+   <div class="modal-dialog">
+      <div class="modal-content">
+         <div class="modal-body">
+             <h2><p>Logs</p></h1>
+         </div>
+      </div>
+   </div>
+</div>
+
+
+</body>
+

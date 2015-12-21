@@ -1,0 +1,12 @@
+@import url("http://fonts.googleapis.com/css?family=Montserrat");
+
+.montserrat { font-family: 'Montserrat' !important; }
+
+body { margin-bottom: 30px; }
+
+footer { margin-top: 30px !important; }
+
+.modal .modal-body {
+    max-height: 420px !important;
+    overflow-y: auto !important;
+}
